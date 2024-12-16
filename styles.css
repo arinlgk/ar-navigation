@@ -1,0 +1,78 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+#ui-overlay {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 80%;
+    max-width: 300px;
+}
+
+#choose-destination, #arrival-options button {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-bottom: 10px;
+}
+
+#choose-destination:hover, #arrival-options button:hover {
+    background-color: #0056b3;
+}
+
+#destination-list {
+    margin-top: 10px;
+    background-color: white;
+    border-radius: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+#destination-list button {
+    width: 100%;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border: none;
+    border-bottom: 1px solid #dee2e6;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#destination-list button:last-child {
+    border-bottom: none;
+}
+
+#destination-list button:hover {
+    background-color: #e9ecef;
+}
+
+#navigation-info {
+    margin-top: 10px;
+    padding: 12px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+#arrival-options {
+    display: flex;
+    justify-content: space-between;
+}
+
+#arrival-options button {
+    width: 48%;
+}
+
