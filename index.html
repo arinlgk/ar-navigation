@@ -1,126 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UMPSA Pekan AR Campus Navigation</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <title>AR Navigation</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
-    <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
-    <link rel="stylesheet" href="styles.css">
-    <script src="navigation.js" defer></script>
+    <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
 </head>
 <body>
-    <a-scene
-        vr-mode-ui="enabled: false"
-        embedded
-        arjs="sourceType: webcam; debugUIEnabled: false;"
-    >
-        <a-camera gps-camera rotation-reader></a-camera>
-
+    <a-scene embedded arjs>
         <a-entity id="mainEntrance"
             gps-entity-place="latitude: 3.5424105381833333; longitude: 103.42519353920233"
-            gltf-model="/placeholder.svg?height=100&width=100"
+            gltf-model="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BoxAnimated/glTF/BoxAnimated.gltf"
             scale="20 20 20"
             position="0 0 0"
             name="UMPSA Pekan Main Entrance"
             navigate-on-click
+            look-at="[gps-camera]"
         ></a-entity>
 
-        <a-entity id="facultyComputing"
-            gps-entity-place="latitude: 3.5470578908910624; longitude: 103.42766713303656"
-            gltf-model="/placeholder.svg?height=100&width=100"
-            scale="20 20 20"
-            position="0 0 0"
-            name="Faculty of Computing"
-            navigate-on-click
-        ></a-entity>
-
-        <a-entity id="ditec"
-            gps-entity-place="latitude: 3.5444022329295355; longitude: 103.43162607338732"
-            gltf-model="/placeholder.svg?height=100&width=100"
-            scale="20 20 20"
-            position="0 0 0"
-            name="Ditec UMPSA"
-            navigate-on-click
-        ></a-entity>
-
-        <a-entity id="ftkee"
-            gps-entity-place="latitude: 3.5395406456778633; longitude: 103.4310681740305"
-            gltf-model="/placeholder.svg?height=100&width=100"
-            scale="20 20 20"
-            position="0 0 0"
-            name="FTKEE Cafe"
-            navigate-on-click
-        ></a-entity>
-
-        <a-entity id="pap"
-            gps-entity-place="latitude: 3.539176561005007; longitude: 103.42781733683893"
-            gltf-model="/placeholder.svg?height=100&width=100"
-            scale="20 20 20"
-            position="0 0 0"
-            name="PAP"
-            navigate-on-click
-        ></a-entity>
-
-        <a-entity id="dewan"
-            gps-entity-place="latitude: 3.541152253948052; longitude: 103.42994164632783"
-            gltf-model="/placeholder.svg?height=100&width=100"
-            scale="20 20 20"
-            position="0 0 0"
-            name="Dewan Serbaguna"
-            navigate-on-click
-        ></a-entity>
-
-        <a-entity id="heAndShe"
-            gps-entity-place="latitude: 3.5389632623719502; longitude: 103.42746000826024"
-            gltf-model="/placeholder.svg?height=100&width=100"
-            scale="20 20 20"
-            position="0 0 0"
-            name="He & She"
-            navigate-on-click
-        ></a-entity>
-
-        <a-entity id="basketballCourt"
-            gps-entity-place="latitude: 3.5382039072479077; longitude: 103.42795100526111"
-            gltf-model="/placeholder.svg?height=100&width=100"
-            scale="20 20 20"
-            position="0 0 0"
-            name="KK5 Basketball Court"
-            navigate-on-click
-        ></a-entity>
-
-        <a-entity id="library"
-            gps-entity-place="latitude: 3.5427684944699585; longitude: 103.43133217957656"
-            gltf-model="/placeholder.svg?height=100&width=100"
-            scale="20 20 20"
-            position="0 0 0"
-            name="Library"
-            navigate-on-click
-        ></a-entity>
-
-        <a-entity id="healthCentre"
-            gps-entity-place="latitude: 3.5487033301435926; longitude: 103.43386164772174"
-            gltf-model="/placeholder.svg?height=100&width=100"
-            scale="20 20 20"
-            position="0 0 0"
-            name="University Health Centre"
-            navigate-on-click
-        ></a-entity>
-
-        <a-entity id="navigationPath" line="color: #FF0000; opacity: 0.8"></a-entity>
-        <a-entity id="directionArrow" gltf-model="/placeholder.svg?height=100&width=100" scale="10 10 10"></a-entity>
+        <a-entity id="info-panel" position="0 1.6 -2" rotation="-30 0 0" scale="2 2 2" text="width: 2; color: white; align: center; value: Select a destination to begin navigation."></a-entity>
     </a-scene>
-
-    <div id="ui-overlay">
-        <button id="choose-destination" onclick="showDestinationList()">Choose Destination</button>
-        <div id="destination-list" style="display: none;"></div>
-        <div id="navigation-info" style="display: none;"></div>
-        <div id="arrival-options" style="display: none;">
-            <button onclick="viewInfo()">View Info</button>
-            <button onclick="endNavigation()">End Navigation</button>
-        </div>
-    </div>
 </body>
 </html>
 
