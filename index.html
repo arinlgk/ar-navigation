@@ -346,7 +346,7 @@
             } else if (distance < 50) {
                 return "🎯 Your next turn is very close!";
             } else {
-                return `👣 ${instruction}`;
+                return 👣 ${instruction};
             }
         }
 
@@ -354,7 +354,7 @@
             clearARScene();
 
             const destinationEntity = document.createElement('a-entity');
-            destinationEntity.setAttribute('gps-entity-place', `latitude: ${nextStepLocation.lat()}; longitude: ${nextStepLocation.lng()};`);
+            destinationEntity.setAttribute('gps-entity-place', latitude: ${nextStepLocation.lat()}; longitude: ${nextStepLocation.lng()};);
             
             const markerContainer = document.createElement('a-entity');
             markerContainer.setAttribute('look-at', '[gps-camera]');
@@ -382,7 +382,7 @@
                 nextStepLocation
             );
             const scale = Math.max(20, Math.min(50, distance / 10));
-            destinationEntity.setAttribute('scale', `${scale} ${scale} ${scale}`);
+            destinationEntity.setAttribute('scale', ${scale} ${scale} ${scale});
             
             scene.appendChild(destinationEntity);
         }
@@ -435,6 +435,7 @@
                             lat: position.coords.latitude,
                             lon: position.coords.longitude,
                         };
+                        console.log('User location updated:', userLocation);
                         if (selectedDestination) {
                             updateNavigation();
                         }
@@ -479,4 +480,3 @@
     </script>
 </body>
 </html>
-
