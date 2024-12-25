@@ -428,85 +428,31 @@
         }
 
         function initializeGeolocation() {
-    if ('geolocation' in navigator) {
-        watchId = navigator.geolocation.watchPosition(
-            (position) => {
-                userLocation = {
-                    lat: position.coords.latitude,
-                    lon: position.coords.longitude,
-                };
-                console.log('User location updated:', userLocation);
-                if (selectedDestination) {
-                    updateNavigation();
-                }
-            },
-            (error) => {
-                console.error('Geolocation error:', error);
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage.textContent = 'Location access denied. Please allow location permissions in your browser settings.';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage.textContent = 'Unable to determine your location. Ensure GPS or Wi-Fi is enabled.';
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage.textContent = 'Location request timed out. Try again or move to an area with better signal.';
-                        break;
-                    default:
-                        errorMessage.textContent = 'An unknown error occurred while accessing your location.';
-                }
-            },
-            {
-                enableHighAccuracy: true,
-                maximumAge: 0,
-                timeout: 10000, // Timeout after 10 seconds
+            if ('geolocation' in navigator) {
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        userLocation = {
+                            lat: position.coords.latitude,
+                            lon: position.coords.longitude,
+                        };
+                        if (selectedDestination) {
+                            updateNavigation();
+                        }
+                    },
+                    (error) => {
+                        console.error('Geolocation error:', error);
+                        errorMessage.textContent = 'Unable to get your location. Please enable GPS and try again.';
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        maximumAge: 0,
+                        timeout: 5000
+                    }
+                );
+            } else {
+                errorMessage.textContent = 'Geolocation is not supported by your browser';
             }
-        );
-    } else {
-        console.error('Geolocation is not supported by this browser.');
-        errorMessage.textContent = 'Geolocation is not supported by your browser. Please update or switch browsers.';
-    }
-}
-
-function startExperience() {
-    splashScreen.classList.add('fade-out');
-    setTimeout(() => {
-        splashScreen.classList.add('hidden');
-        uiOverlay.classList.remove('hidden');
-    }, 500);
-
-    initializeGeolocation();
-    initializeGoogleMaps();
-}
-
-function startNavigation() {
-    selectedDestination = waypoints.find(wp => wp.id === parseInt(destinationSelect.value));
-    if (selectedDestination && userLocation) {
-        showLoading();
-        calculateRoute(userLocation, selectedDestination);
-    } else {
-        if (!selectedDestination) {
-            errorMessage.textContent = 'Please select a destination.';
-        } else if (!userLocation) {
-            errorMessage.textContent = 'Unable to fetch your current location. Ensure location permissions are granted.';
         }
-    }
-}
-
-function resetNavigation() {
-    showLoading();
-    setTimeout(() => {
-        uiOverlay.classList.remove('hidden');
-        document.getElementById('controls').classList.add('hidden');
-        navigationInfo.classList.add('hidden');
-        selectedDestination = null;
-        currentRoute = null;
-        currentStep = 0;
-        if (updateInterval) clearInterval(updateInterval);
-        clearARScene();
-        hideLoading();
-    }, 500);
-}
 
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
