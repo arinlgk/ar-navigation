@@ -508,6 +508,36 @@ function resetNavigation() {
     }, 500);
 }
 
+function calculateRoute(origin, destination) {
+    const request = {
+        origin: new google.maps.LatLng(origin.lat, origin.lon),
+        destination: new google.maps.LatLng(destination.lat, destination.lon),
+        travelMode: 'WALKING',
+    };
+
+    console.log('Route Request:', request); // Log the request for debugging
+
+    directionsService.route(request, (result, status) => {
+        if (status === 'OK') {
+            console.log('Route Result:', result); // Log the result for debugging
+            currentRoute = result.routes[0];
+            currentStep = 0;
+            uiOverlay.classList.add('hidden');
+            document.getElementById('controls').classList.remove('hidden');
+            navigationInfo.classList.remove('hidden');
+            updateNavigation();
+            hideLoading();
+
+            if (updateInterval) clearInterval(updateInterval);
+            updateInterval = setInterval(updateNavigation, 1000);
+        } else {
+            console.error('Directions API Error:', status); // Log the error
+            errorMessage.textContent = Unable to calculate route: ${status};
+            hideLoading();
+        }
+    });
+}
+
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen();
