@@ -346,7 +346,7 @@
             } else if (distance < 50) {
                 return "🎯 Your next turn is very close!";
             } else {
-                return 👣 ${instruction};
+                return `👣 ${instruction}`;
             }
         }
 
@@ -354,7 +354,7 @@
             clearARScene();
 
             const destinationEntity = document.createElement('a-entity');
-            destinationEntity.setAttribute('gps-entity-place', latitude: ${nextStepLocation.lat()}; longitude: ${nextStepLocation.lng()};);
+            destinationEntity.setAttribute('gps-entity-place', `latitude: ${nextStepLocation.lat()}; longitude: ${nextStepLocation.lng()};`);
             
             const markerContainer = document.createElement('a-entity');
             markerContainer.setAttribute('look-at', '[gps-camera]');
@@ -382,7 +382,7 @@
                 nextStepLocation
             );
             const scale = Math.max(20, Math.min(50, distance / 10));
-            destinationEntity.setAttribute('scale', ${scale} ${scale} ${scale});
+            destinationEntity.setAttribute('scale', `${scale} ${scale} ${scale}`);
             
             scene.appendChild(destinationEntity);
         }
@@ -429,30 +429,22 @@
 
         function initializeGeolocation() {
             if ('geolocation' in navigator) {
-                watchId = navigator.geolocation.watchPosition(
-                    (position) => {
-                        userLocation = {
-                            lat: position.coords.latitude,
-                            lon: position.coords.longitude,
-                        };
-                        console.log('User location updated:', userLocation);
-                        if (selectedDestination) {
-                            updateNavigation();
-                        }
-                    },
-                    (error) => {
-                        console.error('Geolocation error:', error);
-                        errorMessage.textContent = 'Unable to get your location. Please enable GPS and try again.';
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        maximumAge: 0,
-                        timeout: 5000
-                    }
-                );
-            } else {
-                errorMessage.textContent = 'Geolocation is not supported by your browser';
-            }
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            console.log('Location accessed:', position);
+                        },
+                        (error) => {
+                            console.error('Geolocation error:', error.message);
+                            if (error.code === error.PERMISSION_DENIED) {
+                                alert('Please enable location permissions in your browser.');
+                            }
+                        },
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    );
+                } else {
+                    console.error('Geolocation is not supported by your browser.');
+                    alert('Your browser does not support geolocation. Please update or switch browsers.');
+                }
         }
 
         function toggleFullscreen() {
@@ -480,3 +472,4 @@
     </script>
 </body>
 </html>
+
