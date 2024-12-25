@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMP Pekan AR Navigation</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_ACTUAL_API_KEY_HERE&libraries=geometry"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 1001;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        #splash-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #splash-screen h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        #splash-screen p {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            text-align: center;
+            padding: 0 20px;
+            color: #e3f2fd;
+        }
+
+        #ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 1000;
+        }
+
+        .button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin: 10px;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .button:hover {
+            background: #1976d2;
+        }
+
+        select {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            margin: 10px;
+            min-width: 250px;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        select option {
+            background: #1a237e;
+            color: white;
+        }
+
+        #error-message {
+            color: #ff5252;
+            margin-top: 15px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            background: rgba(255, 82, 82, 0.1);
+            max-width: 80%;
+        }
+
+        #navigation-info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(33, 150, 243, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1em;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            max-width: 300px;
+            backdrop-filter: blur(10px);
+        }
+
+        #navigation-info strong {
+            color: #e3f2fd;
+        }
+
+        #controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .control-button {
+            background: rgba(33, 150, 243, 0.9);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1002;
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="splash-screen">
+        <h1>Welcome to UMP Pekan AR Navigation</h1>
+        <p>Experience seamless campus navigation with augmented reality</p>
+        <button class="button" onclick="startExperience()">Start Experience</button>
+    </div>
+
+    <div id="loading">
+        <div class="spinner"></div>
+        <div>Loading...</div>
+    </div>
+
+    <div id="ui-overlay" class="hidden">
+        <h1>Select Your Destination</h1>
+        <select id="destination-select">
+            <option value="">Choose location...</option>
+        </select>
+        <button id="start-button" class="button">Start Navigation</button>
+        <div id="error-message"></div>
+    </div>
+
+    <div id="navigation-info" class="hidden"></div>
+
+    <div id="controls" class="hidden">
+        <button class="control-button" id="reset-button" title="Reset Navigation">↺</button>
+        <button class="control-button" id="fullscreen-button" title="Toggle Fullscreen">⛶</button>
+    </div>
+
+    <a-scene
+        vr-mode-ui="enabled: false"
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    >
+        <a-camera gps-camera rotation-reader></a-camera>
+    </a-scene>
+
+    <script>
+        const waypoints = [
+            { id: 1, name: 'UMPSA Main Entrance', lat: 3.5424105381833333, lon: 103.42519353920233, color: '#f44336' },
+            { id: 2, name: 'Faculty of Computing', lat: 3.5470578908910624, lon: 103.42766713303656, color: '#4caf50' },
+            { id: 3, name: 'Ditec UMPSA', lat: 3.5444022329295355, lon: 103.43162607338732, color: '#2196f3' },
+            { id: 4, name: 'FTKEE Cafe', lat: 3.5395406456778633, lon: 103.4310681740305, color: '#ffc107' },
+            { id: 5, name: 'PAP', lat: 3.539176561005007, lon: 103.42781733683893, color: '#ff9800' },
+            { id: 6, name: 'Dewan Serbaguna', lat: 3.541152253948052, lon: 103.42994164632783, color: '#9c27b0' },
+            { id: 7, name: 'He & She', lat: 3.5389632623719502, lon: 103.42746000826024, color: '#e91e63' },
+            { id: 8, name: 'KK5 Basketball Court', lat: 3.5382039072479077, lon: 103.42795100526111, color: '#00bcd4' },
+            { id: 9, name: 'Library', lat: 3.5427684944699585, lon: 103.43133217957656, color: '#795548' },
+            { id: 10, name: 'University Health Centre', lat: 3.5487033301435926, lon: 103.43386164772174, color: '#607d8b' },
+        ];
+
+        let userLocation = null;
+        let selectedDestination = null;
+        let watchId = null;
+        let updateInterval = null;
+        let directionsService = null;
+        let directionsRenderer = null;
+        let currentRoute = null;
+        let currentStep = 0;
+
+        const splashScreen = document.getElementById('splash-screen');
+        const uiOverlay = document.getElementById('ui-overlay');
+        const destinationSelect = document.getElementById('destination-select');
+        const startButton = document.getElementById('start-button');
+        const resetButton = document.getElementById('reset-button');
+        const fullscreenButton = document.getElementById('fullscreen-button');
+        const errorMessage = document.getElementById('error-message');
+        const navigationInfo = document.getElementById('navigation-info');
+        const loading = document.getElementById('loading');
+        const scene = document.querySelector('a-scene');
+
+        function startExperience() {
+            splashScreen.classList.add('fade-out');
+            setTimeout(() => {
+                splashScreen.classList.add('hidden');
+                uiOverlay.classList.remove('hidden');
+            }, 500);
+            initializeGeolocation();
+            initializeGoogleMaps();
+        }
+
+        function showLoading() {
+            loading.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        waypoints.forEach(wp => {
+            const option = document.createElement('option');
+            option.value = wp.id;
+            option.textContent = wp.name;
+            destinationSelect.appendChild(option);
+        });
+
+        function startNavigation() {
+            selectedDestination = waypoints.find(wp => wp.id === parseInt(destinationSelect.value));
+            if (selectedDestination && userLocation) {
+                showLoading();
+                calculateRoute(userLocation, selectedDestination);
+            } else {
+                errorMessage.textContent = 'Please select a destination and ensure your location is available.';
+            }
+        }
+
+        function resetNavigation() {
+            showLoading();
+            setTimeout(() => {
+                uiOverlay.classList.remove('hidden');
+                document.getElementById('controls').classList.add('hidden');
+                navigationInfo.classList.add('hidden');
+                selectedDestination = null;
+                currentRoute = null;
+                currentStep = 0;
+                if (updateInterval) clearInterval(updateInterval);
+                clearARScene();
+                hideLoading();
+            }, 500);
+        }
+
+        function updateNavigation() {
+            if (selectedDestination && userLocation && currentRoute) {
+                const leg = currentRoute.legs[0];
+                const step = leg.steps[currentStep];
+                const nextStep = leg.steps[currentStep + 1];
+                const distanceToNextStep = google.maps.geometry.spherical.computeDistanceBetween(
+                    new google.maps.LatLng(userLocation.lat, userLocation.lon),
+                    step.end_location
+                );
+
+                if (distanceToNextStep < 10 && nextStep) {
+                    currentStep++;
+                }
+
+                const remainingDistance = leg.distance.value - 
+                    google.maps.geometry.spherical.computeDistanceBetween(
+                        new google.maps.LatLng(userLocation.lat, userLocation.lon),
+                        leg.end_location
+                    );
+
+                navigationInfo.innerHTML = `
+                    <strong>${selectedDestination.name}</strong><br>
+                    📍 Total Distance: ${(remainingDistance / 1000).toFixed(2)}km<br>
+                    🧭 Next Step: ${step.instructions}<br>
+                    👣 ${getNavigationInstructions(distanceToNextStep, step.instructions)}
+                `;
+
+                updateARScene(step.end_location);
+            }
+        }
+
+        function getNavigationInstructions(distance, instruction) {
+            if (distance < 10) {
+                return "✨ You have reached this step!";
+            } else if (distance < 50) {
+                return "🎯 Your next turn is very close!";
+            } else {
+                return `👣 ${instruction}`;
+            }
+        }
+
+        function updateARScene(nextStepLocation) {
+            clearARScene();
+
+            const destinationEntity = document.createElement('a-entity');
+            destinationEntity.setAttribute('gps-entity-place', `latitude: ${nextStepLocation.lat()}; longitude: ${nextStepLocation.lng()};`);
+            
+            const markerContainer = document.createElement('a-entity');
+            markerContainer.setAttribute('look-at', '[gps-camera]');
+            
+            const marker = document.createElement('a-entity');
+            marker.innerHTML = `
+                <a-cylinder color="${selectedDestination.color}" height="0.5" radius="0.2" position="0 0 0">
+                    <a-cone color="${selectedDestination.color}" height="0.5" radius-bottom="0.2" radius-top="0" position="0 0.5 0"></a-cone>
+                </a-cylinder>
+            `;
+            
+            const text = document.createElement('a-text');
+            text.setAttribute('value', 'Next Turn');
+            text.setAttribute('align', 'center');
+            text.setAttribute('position', '0 1.5 0');
+            text.setAttribute('scale', '2 2 2');
+            text.setAttribute('color', 'white');
+            
+            markerContainer.appendChild(marker);
+            markerContainer.appendChild(text);
+            destinationEntity.appendChild(markerContainer);
+            
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                new google.maps.LatLng(userLocation.lat, userLocation.lon),
+                nextStepLocation
+            );
+            const scale = Math.max(20, Math.min(50, distance / 10));
+            destinationEntity.setAttribute('scale', `${scale} ${scale} ${scale}`);
+            
+            scene.appendChild(destinationEntity);
+        }
+
+        function clearARScene() {
+            const entities = scene.querySelectorAll('a-entity');
+            entities.forEach(entity => {
+                if (entity.getAttribute('gps-entity-place')) {
+                    scene.removeChild(entity);
+                }
+            });
+        }
+
+        function initializeGoogleMaps() {
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer();
+        }
+
+        function calculateRoute(origin, destination) {
+            const request = {
+                origin: new google.maps.LatLng(origin.lat, origin.lon),
+                destination: new google.maps.LatLng(destination.lat, destination.lon),
+                travelMode: 'WALKING'
+            };
+
+            directionsService.route(request, (result, status) => {
+                if (status === 'OK') {
+                    currentRoute = result.routes[0];
+                    currentStep = 0;
+                    uiOverlay.classList.add('hidden');
+                    document.getElementById('controls').classList.remove('hidden');
+                    navigationInfo.classList.remove('hidden');
+                    updateNavigation();
+                    hideLoading();
+                    
+                    if (updateInterval) clearInterval(updateInterval);
+                    updateInterval = setInterval(updateNavigation, 1000);
+                } else {
+                    errorMessage.textContent = 'Unable to calculate route. Please try again.';
+                    hideLoading();
+                }
+            });
+        }
+
+        function initializeGeolocation() {
+            if ('geolocation' in navigator) {
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        userLocation = {
+                            lat: position.coords.latitude,
+                            lon: position.coords.longitude,
+                        };
+                        if (selectedDestination) {
+                            updateNavigation();
+                        }
+                    },
+                    (error) => {
+                        console.error('Geolocation error:', error);
+                        errorMessage.textContent = 'Unable to get your location. Please enable GPS and try again.';
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        maximumAge: 0,
+                        timeout: 5000
+                    }
+                );
+            } else {
+                errorMessage.textContent = 'Geolocation is not supported by your browser';
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        startButton.addEventListener('click', startNavigation);
+        resetButton.addEventListener('click', resetNavigation);
+        fullscreenButton.addEventListener('click', toggleFullscreen);
+
+        window.addEventListener('beforeunload', () => {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        });
+    </script>
+</body>
+</html>
+
