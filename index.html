@@ -4,10 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UMP Pekan AR Navigation</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC_WbGjL714bI6L6vM_lhGmwI5oMKHsCnM&libraries=geometry"></script>
+    <!-- Load scripts with error handling -->
+    <script>
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError object: ' + JSON.stringify(error));
+            return false;
+        };
+    </script>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js" onerror="console.error('Failed to load A-Frame')"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js" onerror="console.error('Failed to load AR.js')"></script>
+    <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js" onerror="console.error('Failed to load look-at component')"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC_WbGjL714bI6L6vM_lhGmwI5oMKHsCnM&libraries=geometry" 
+        onerror="console.error('Failed to load Google Maps API')"
+        onload="console.log('Google Maps API loaded successfully')"></script>
     <style>
         body {
             margin: 0;
@@ -226,6 +235,18 @@
     </a-scene>
 
     <script>
+        // Add this at the start of your script
+        console.log('Script initialization started');
+
+        function checkAPILoaded() {
+            if (typeof google === 'undefined') {
+                console.error('Google Maps API not loaded');
+                errorMessage.textContent = 'Google Maps API failed to load. Please check your internet connection and try again.';
+                return false;
+            }
+            return true;
+        }
+
         const waypoints = [
             { id: 1, name: 'UMPSA Main Entrance', lat: 3.5424105381833333, lon: 103.42519353920233, color: '#f44336' },
             { id: 2, name: 'Faculty of Computing', lat: 3.5470578908910624, lon: 103.42766713303656, color: '#4caf50' },
@@ -260,6 +281,11 @@
         const scene = document.querySelector('a-scene');
 
         function startExperience() {
+            console.log('Starting experience...');
+            if (!checkAPILoaded()) {
+                return;
+            }
+
             splashScreen.classList.add('fade-out');
             setTimeout(() => {
                 splashScreen.classList.add('hidden');
@@ -346,7 +372,7 @@
             } else if (distance < 50) {
                 return "🎯 Your next turn is very close!";
             } else {
-                return `👣 ${instruction}`;
+                return 👣 ${instruction};
             }
         }
 
@@ -354,7 +380,7 @@
             clearARScene();
 
             const destinationEntity = document.createElement('a-entity');
-            destinationEntity.setAttribute('gps-entity-place', `latitude: ${nextStepLocation.lat()}; longitude: ${nextStepLocation.lng()};`);
+            destinationEntity.setAttribute('gps-entity-place', latitude: ${nextStepLocation.lat()}; longitude: ${nextStepLocation.lng()};);
             
             const markerContainer = document.createElement('a-entity');
             markerContainer.setAttribute('look-at', '[gps-camera]');
@@ -382,7 +408,7 @@
                 nextStepLocation
             );
             const scale = Math.max(20, Math.min(50, distance / 10));
-            destinationEntity.setAttribute('scale', `${scale} ${scale} ${scale}`);
+            destinationEntity.setAttribute('scale', ${scale} ${scale} ${scale});
             
             scene.appendChild(destinationEntity);
         }
@@ -402,13 +428,24 @@
         }
 
         function calculateRoute(origin, destination) {
+            console.log('Calculating route...', {origin, destination});
+            
+            if (!checkAPILoaded()) {
+                return;
+            }
+
             const request = {
                 origin: new google.maps.LatLng(origin.lat, origin.lon),
                 destination: new google.maps.LatLng(destination.lat, destination.lon),
                 travelMode: 'WALKING'
             };
 
+            console.log('Route request:', request);
+
             directionsService.route(request, (result, status) => {
+                console.log('Route calculation result:', status);
+                console.log('Route details:', result);
+
                 if (status === 'OK') {
                     currentRoute = result.routes[0];
                     currentStep = 0;
@@ -421,122 +458,58 @@
                     if (updateInterval) clearInterval(updateInterval);
                     updateInterval = setInterval(updateNavigation, 1000);
                 } else {
-                    errorMessage.textContent = 'Unable to calculate route. Please try again.';
+                    console.error('Direction service failed:', status);
+                    errorMessage.textContent = Unable to calculate route. Status: ${status}. Please try again.;
                     hideLoading();
                 }
             });
         }
 
         function initializeGeolocation() {
-    if ('geolocation' in navigator) {
-        watchId = navigator.geolocation.watchPosition(
-            (position) => {
-                userLocation = {
-                    lat: position.coords.latitude,
-                    lon: position.coords.longitude,
-                };
-                console.log('User location updated:', userLocation);
-                if (selectedDestination) {
-                    updateNavigation();
-                }
-            },
-            (error) => {
-                console.error('Geolocation error:', error);
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage.textContent = 'Location access denied. Please allow location permissions in your browser settings.';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage.textContent = 'Unable to determine your location. Ensure GPS or Wi-Fi is enabled.';
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage.textContent = 'Location request timed out. Try again or move to an area with better signal.';
-                        break;
-                    default:
-                        errorMessage.textContent = 'An unknown error occurred while accessing your location.';
-                }
-            },
-            {
-                enableHighAccuracy: true,
-                maximumAge: 0,
-                timeout: 10000, // Timeout after 10 seconds
+            console.log('Initializing geolocation...');
+            
+            if (!('geolocation' in navigator)) {
+                console.error('Geolocation not supported');
+                errorMessage.textContent = 'Geolocation is not supported by your browser';
+                return;
             }
-        );
-    } else {
-        console.error('Geolocation is not supported by this browser.');
-        errorMessage.textContent = 'Geolocation is not supported by your browser. Please update or switch browsers.';
-    }
-}
 
-function startExperience() {
-    splashScreen.classList.add('fade-out');
-    setTimeout(() => {
-        splashScreen.classList.add('hidden');
-        uiOverlay.classList.remove('hidden');
-    }, 500);
-
-    initializeGeolocation();
-    initializeGoogleMaps();
-}
-
-function startNavigation() {
-    selectedDestination = waypoints.find(wp => wp.id === parseInt(destinationSelect.value));
-    if (selectedDestination && userLocation) {
-        showLoading();
-        calculateRoute(userLocation, selectedDestination);
-    } else {
-        if (!selectedDestination) {
-            errorMessage.textContent = 'Please select a destination.';
-        } else if (!userLocation) {
-            errorMessage.textContent = 'Unable to fetch your current location. Ensure location permissions are granted.';
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    console.log('Got position:', position.coords);
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude,
+                    };
+                    if (selectedDestination) {
+                        updateNavigation();
+                    }
+                },
+                (error) => {
+                    console.error('Geolocation error:', error);
+                    let errorMsg = 'Unable to get your location. ';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg += 'Please enable location permissions in your browser settings.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg += 'Location information is unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg += 'Location request timed out.';
+                            break;
+                        default:
+                            errorMsg += 'Please enable GPS and try again.';
+                    }
+                    errorMessage.textContent = errorMsg;
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 5000
+                }
+            );
         }
-    }
-}
-
-function resetNavigation() {
-    showLoading();
-    setTimeout(() => {
-        uiOverlay.classList.remove('hidden');
-        document.getElementById('controls').classList.add('hidden');
-        navigationInfo.classList.add('hidden');
-        selectedDestination = null;
-        currentRoute = null;
-        currentStep = 0;
-        if (updateInterval) clearInterval(updateInterval);
-        clearARScene();
-        hideLoading();
-    }, 500);
-}
-
-function calculateRoute(origin, destination) {
-    const request = {
-        origin: new google.maps.LatLng(origin.lat, origin.lon),
-        destination: new google.maps.LatLng(destination.lat, destination.lon),
-        travelMode: 'WALKING',
-    };
-
-    console.log('Route Request:', request); // Log the request for debugging
-
-    directionsService.route(request, (result, status) => {
-        if (status === 'OK') {
-            console.log('Route Result:', result); // Log the result for debugging
-            currentRoute = result.routes[0];
-            currentStep = 0;
-            uiOverlay.classList.add('hidden');
-            document.getElementById('controls').classList.remove('hidden');
-            navigationInfo.classList.remove('hidden');
-            updateNavigation();
-            hideLoading();
-
-            if (updateInterval) clearInterval(updateInterval);
-            updateInterval = setInterval(updateNavigation, 1000);
-        } else {
-            console.error('Directions API Error:', status); // Log the error
-            errorMessage.textContent = Unable to calculate route: ${status};
-            hideLoading();
-        }
-    });
-}
 
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
@@ -563,4 +536,3 @@ function calculateRoute(origin, destination) {
     </script>
 </body>
 </html>
-
